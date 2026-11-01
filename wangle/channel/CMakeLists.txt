@@ -25,7 +25,6 @@ wangle_add_library(wangle_channel
     wangle_util_logging
     Folly::folly_exception_wrapper
     Folly::folly_executors_io_thread_pool_executor
-    Folly::folly_format
     Folly::folly_futures_core
     Folly::folly_futures_shared_promise
     Folly::folly_io_async_async_base

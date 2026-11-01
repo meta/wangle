@@ -21,7 +21,6 @@ wangle_add_library(wangle_ssl_ssl_util
     wangle_util_logging
     Folly::folly_conv
     Folly::folly_file_util
-    Folly::folly_format
     Folly::folly_io_async_async_ssl_socket
     Folly::folly_memory
     Folly::folly_portability_openssl
