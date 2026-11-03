@@ -283,8 +283,9 @@ class SSLContextManager {
       const SSLContextConfig&,
       std::string& /* commonName */) const {
     WANGLE_LOG(FATAL) << "Unsupported in base SSLContextManager";
-    // unreachable
+#if WANGLE_LOGGING_DISABLED
     return false;
+#endif
   }
 
   virtual void overrideConfiguration(
