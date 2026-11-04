@@ -85,8 +85,11 @@ def wangle_cxx_library(
         # the runtime rather than the FBCODE arm: `fbobjc/mode/buck2/linux`
         # builds these targets with the CXX arm against fbcode's shared deps.
         preferred_linkage = select({
-            "DEFAULT": "static",
-            "ovr_config//runtime:fbcode": "any",
+            "DEFAULT": select({
+                "DEFAULT": "static",
+                "ovr_config//runtime:fbcode": "any",
+            }),
+            "ovr_config//build_mode:arvr_mode[enabled]": "static",
         }),
         fbandroid_compiler_flags = fbandroid_compiler_flags + FBANDROID_CXXFLAGS,
         fbobjc_compiler_flags = fbobjc_compiler_flags + FBOBJC_CXXFLAGS,
