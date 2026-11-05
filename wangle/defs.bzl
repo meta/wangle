@@ -87,6 +87,7 @@ def wangle_cxx_library(
         preferred_linkage = select({
             "DEFAULT": select({
                 "DEFAULT": "static",
+                "ovr_config//build_mode/constraints:conda-linkage[static]": "any",
                 "ovr_config//runtime:fbcode": "any",
             }),
             "ovr_config//build_mode:arvr_mode[enabled]": "static",
