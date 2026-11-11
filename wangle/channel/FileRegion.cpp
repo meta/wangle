@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <array>
+
 #include <folly/system/HardwareConcurrency.h>
 #include <wangle/channel/FileRegion.h>
 #include <wangle/util/Logging.h>
@@ -124,8 +126,8 @@ void FileRegion::FileWriteRequest::start() {
             "writeFile supported only with glibc"));
     return;
 #else
-    int pipeFds[2] = {0};
-    if (::pipe2(pipeFds, O_NONBLOCK) == -1) {
+    std::array<int, 2> pipeFds = {0};
+    if (::pipe2(pipeFds.data(), O_NONBLOCK) == -1) {
       fail(
           __func__,
           AsyncSocketException(
