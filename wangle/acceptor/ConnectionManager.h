@@ -25,6 +25,7 @@
 #include <folly/io/async/EventBase.h>
 #include <folly/io/async/HHWheelTimer.h>
 #include <wangle/util/Logging.h>
+#include <algorithm>
 #include <chrono>
 #include <iterator>
 
@@ -353,8 +354,7 @@ class ConnectionManager : public folly::DelayedDestruction,
       auto it = manager_.conns_.begin();
       const size_t conns_size = manager_.conns_.size();
       const size_t numToDrain = static_cast<size_t>(
-          static_cast<double>(conns_size) *
-          folly::constexpr_clamp(pct_, 0., 1.));
+          static_cast<double>(conns_size) * std::clamp(pct_, 0., 1.));
       std::advance(it, conns_size - numToDrain);
       return it;
     }

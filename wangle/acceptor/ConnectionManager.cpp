@@ -16,10 +16,10 @@
 
 #include <wangle/acceptor/ConnectionManager.h>
 
-#include <folly/ConstexprMath.h>
 #include <folly/io/async/EventBase.h>
 #include <wangle/acceptor/ManagedConnection.h>
 #include <wangle/util/Logging.h>
+#include <algorithm>
 #include <chrono>
 
 using std::chrono::milliseconds;
@@ -371,7 +371,7 @@ void ConnectionManager::dropConnections(
     std::chrono::milliseconds dropDuration,
     std::chrono::milliseconds roundInterval) {
   const size_t connsNum = conns_.size();
-  const size_t numToDrop = connsNum * folly::constexpr_clamp(pct, 0., 1.);
+  const size_t numToDrop = connsNum * std::clamp(pct, 0., 1.);
 
   if (dropDuration.count() <= 0) {
     dropConnections(numToDrop);
@@ -396,7 +396,7 @@ void ConnectionManager::dropToRetainFraction(
     shutdownDrainStarted_ = true;
   }
   const size_t targetConnsNum =
-      shutdownDrainStartCount_ * folly::constexpr_clamp(retainFrac, 0., 1.);
+      shutdownDrainStartCount_ * std::clamp(retainFrac, 0., 1.);
   if (conns_.size() <= targetConnsNum) {
     // Natural disconnects already brought us to this round's target.
     return;
@@ -488,7 +488,7 @@ void ConnectionManager::dropEstablishedConnections(
   if (idleIterator_ == front || N == 0) {
     return;
   }
-  const size_t numToDrop = N * folly::constexpr_clamp(pct, 0., 1.);
+  const size_t numToDrop = N * std::clamp(pct, 0., 1.);
   size_t droppedConns = 0;
   auto it = idleIterator_;
   --it;
