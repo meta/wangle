@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <array>
+
 #include <folly/io/async/test/AsyncSocketTest.h>
 #include <folly/portability/GTest.h>
 #include <wangle/channel/FileRegion.h>
@@ -35,10 +37,10 @@ struct FileRegionTest : public Test {
     acceptedSocket->setReadCB(&rcb);
 
     // Create temp file
-    char path[] = "/tmp/AsyncSocketTest.WriteFile.XXXXXX";
-    fd = mkostemp(path, O_RDWR);
+    std::array path = std::to_array("/tmp/AsyncSocketTest.WriteFile.XXXXXX");
+    fd = mkostemp(path.data(), O_RDWR);
     EXPECT_TRUE(fd > 0);
-    EXPECT_EQ(0, unlink(path));
+    EXPECT_EQ(0, unlink(path.data()));
   }
 
   ~FileRegionTest() override {
