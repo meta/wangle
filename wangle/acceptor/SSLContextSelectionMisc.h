@@ -17,29 +17,34 @@
 #pragma once
 
 #include <folly/String.h>
+#include <cctype>
 #include <string>
 
 namespace wangle {
 
 struct dn_char_traits : public std::char_traits<char> {
+  static int toLower(char c) {
+    return ::tolower(static_cast<unsigned char>(c));
+  }
+
   static bool eq(char c1, char c2) {
-    return ::tolower(c1) == ::tolower(c2);
+    return toLower(c1) == toLower(c2);
   }
 
   static bool ne(char c1, char c2) {
-    return ::tolower(c1) != ::tolower(c2);
+    return toLower(c1) != toLower(c2);
   }
 
   static bool lt(char c1, char c2) {
-    return ::tolower(c1) < ::tolower(c2);
+    return toLower(c1) < toLower(c2);
   }
 
   static int compare(const char* s1, const char* s2, size_t n) {
     while (n--) {
-      if (::tolower(*s1) < ::tolower(*s2)) {
+      if (toLower(*s1) < toLower(*s2)) {
         return -1;
       }
-      if (::tolower(*s1) > ::tolower(*s2)) {
+      if (toLower(*s1) > toLower(*s2)) {
         return 1;
       }
       ++s1;
@@ -49,9 +54,9 @@ struct dn_char_traits : public std::char_traits<char> {
   }
 
   static const char* find(const char* s, size_t n, char a) {
-    char la = static_cast<char>(::tolower(a));
+    const auto la = toLower(a);
     while (n--) {
-      if (::tolower(*s) == la) {
+      if (toLower(*s) == la) {
         return s;
       } else {
         ++s;
