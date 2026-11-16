@@ -81,7 +81,7 @@ class MockHandshakeHelper
           MockHandshakeHelper<UniquePtrTranslationPolicy>> {
  public:
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept override {
     MockHandshakeHelper::dispatchStart(std::move(sock), callback);
   }
@@ -95,14 +95,14 @@ struct UseSharedPtrPolicy<MockHandshakeHelper<P>> {
   MOCK_METHOD2(
       startInternal,
       void(
-          std::shared_ptr<folly::AsyncSSLSocket>,
+          std::shared_ptr<folly::AsyncSocket>,
           wangle::AcceptorHandshakeHelper::Callback*));
 
   void dispatchStart(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       wangle::AcceptorHandshakeHelper::Callback* callback) noexcept {
     startInternal(
-        std::shared_ptr<folly::AsyncSSLSocket>(std::move(sock)), callback);
+        std::shared_ptr<folly::AsyncSocket>(std::move(sock)), callback);
   }
 };
 
@@ -111,10 +111,10 @@ struct UseOwnedRawPtrPolicy<MockHandshakeHelper<P>> {
  public:
   MOCK_METHOD2(
       startInternal,
-      void(folly::AsyncSSLSocket*, wangle::AcceptorHandshakeHelper::Callback*));
+      void(folly::AsyncSocket*, wangle::AcceptorHandshakeHelper::Callback*));
 
   void dispatchStart(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       wangle::AcceptorHandshakeHelper::Callback* callback) noexcept {
     startInternal(sock.release(), callback);
   }

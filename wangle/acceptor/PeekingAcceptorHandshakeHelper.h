@@ -77,13 +77,10 @@ class PeekingAcceptorHandshakeHelper : public AcceptorHandshakeHelper,
 
   // From AcceptorHandshakeHelper
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept override {
     socket_ = std::move(sock);
     callback_ = callback;
-    WANGLE_CHECK_EQ(
-        socket_->getSSLState(),
-        folly::AsyncSSLSocket::SSLStateEnum::STATE_UNENCRYPTED);
     peeker_.reset(new SocketPeeker(*socket_, this, numBytes_));
     peeker_->start();
   }
@@ -144,7 +141,7 @@ class PeekingAcceptorHandshakeHelper : public AcceptorHandshakeHelper,
 
   ~PeekingAcceptorHandshakeHelper() override = default;
 
-  folly::AsyncSSLSocket::UniquePtr socket_;
+  folly::AsyncSocket::UniquePtr socket_;
   AcceptorHandshakeHelper::UniquePtr helper_;
   SocketPeeker::UniquePtr peeker_;
 
@@ -176,7 +173,7 @@ class PeekingAcceptorHandshakeManager : public AcceptorHandshakeManager {
         numBytes_(numBytes) {}
 
  protected:
-  void startHelper(folly::AsyncSSLSocket::UniquePtr sock) override {
+  void startHelper(folly::AsyncSocket::UniquePtr sock) override {
     helper_.reset(new PeekingAcceptorHandshakeHelper(
         clientAddr_, acceptTime_, tinfo_, peekCallbacks_, numBytes_));
     helper_->start(std::move(sock), this);

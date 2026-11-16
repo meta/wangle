@@ -238,7 +238,7 @@ class FizzAcceptorHandshakeHelper
   }
 
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       wangle::AcceptorHandshakeHelper::Callback* callback) noexcept override;
 
   void dropConnection(
@@ -274,7 +274,7 @@ class FizzAcceptorHandshakeHelper
   // `FizzAcceptorHandshakeHelper` are properly reflected when these objects are
   // created.
   fizz::server::AsyncFizzServer::UniquePtr createFizzServer(
-      folly::AsyncSSLSocket::UniquePtr sslSock,
+      folly::AsyncSocket::UniquePtr sock,
       const std::shared_ptr<const fizz::server::FizzServerContext>& fizzContext,
       const std::shared_ptr<fizz::ServerExtensions>& extensions,
       fizz::AsyncFizzBase::TransportOptions options);

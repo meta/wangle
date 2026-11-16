@@ -33,7 +33,7 @@ class UnencryptedAcceptorHandshakeHelper : public AcceptorHandshakeHelper {
   UnencryptedAcceptorHandshakeHelper() = default;
 
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept override {
     callback->connectionReady(
         std::move(sock), "", SecureTransportType::NONE, folly::none);

@@ -121,7 +121,7 @@ class AcceptorHandshakeHelper : public folly::DelayedDestruction {
    *                  the supplied callback.
    */
   virtual void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept = 0;
 
   /**
@@ -214,7 +214,7 @@ class AcceptorHandshakeManager : public ManagedConnection,
    *
    * @param sock    The socket to perform the handshake on.
    */
-  virtual void start(folly::AsyncSSLSocket::UniquePtr sock) noexcept;
+  virtual void start(folly::AsyncSocket::UniquePtr sock) noexcept;
 
   // timeoutExpired is invoked when the handshake timer/idle timer
   // elapses. If the timer elapses, this indicates that the handshake did not
@@ -279,7 +279,7 @@ class AcceptorHandshakeManager : public ManagedConnection,
 
   std::chrono::milliseconds timeSinceAcceptMs() const;
 
-  virtual void startHelper(folly::AsyncSSLSocket::UniquePtr sock) = 0;
+  virtual void startHelper(folly::AsyncSocket::UniquePtr sock) = 0;
 
   void startHandshakeTimeout();
 

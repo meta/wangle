@@ -50,7 +50,7 @@ std::string enumVectorToHexStr(const std::vector<T>& enumVector) {
 } // namespace detail
 
 void FizzAcceptorHandshakeHelper::start(
-    folly::AsyncSSLSocket::UniquePtr sock,
+    folly::AsyncSocket::UniquePtr sock,
     AcceptorHandshakeHelper::Callback* callback) noexcept {
   callback_ = callback;
 
@@ -65,26 +65,23 @@ void FizzAcceptorHandshakeHelper::start(
 }
 
 AsyncFizzServer::UniquePtr FizzAcceptorHandshakeHelper::createFizzServer(
-    folly::AsyncSSLSocket::UniquePtr sslSock,
+    folly::AsyncSocket::UniquePtr sock,
     const std::shared_ptr<const FizzServerContext>& fizzContext,
     const std::shared_ptr<fizz::ServerExtensions>& extensions,
     fizz::AsyncFizzBase::TransportOptions options) {
-  folly::AsyncTransport::UniquePtr asyncTransport;
 #if !defined(_WIN32)
   folly::SocketAddress addr;
-  sslSock->getPeerAddress(&addr);
+  sock->getPeerAddress(&addr);
+  // AsyncFdSocket state is required to hand an AF_UNIX transport back after
+  // StopTLS.
+  if (addr.getFamily() == AF_UNIX &&
+      dynamic_cast<folly::AsyncFdSocket*>(sock.get()) == nullptr) {
+    sock = folly::AsyncSocket::UniquePtr(new folly::AsyncFdSocket(
+        folly::AsyncFdSocket::DoesNotMoveFdSocketState{}, std::move(sock)));
+  }
 #endif
-  folly::AsyncSocket::UniquePtr asyncSock(
-#if !defined(_WIN32)
-      addr.getFamily() == AF_UNIX
-          ? new folly::AsyncFdSocket(
-                folly::AsyncFdSocket::DoesNotMoveFdSocketState{},
-                std::move(sslSock))
-          :
-#endif
-          new folly::AsyncSocket(std::move(sslSock)));
-  asyncSock->cacheAddresses();
-  asyncTransport = folly::AsyncTransport::UniquePtr(std::move(asyncSock));
+  sock->cacheAddresses();
+  folly::AsyncTransport::UniquePtr asyncTransport(std::move(sock));
   AsyncFizzServer::UniquePtr fizzServer(new AsyncFizzServer(
       std::move(asyncTransport), fizzContext, extensions, options));
   fizzServer->setHandshakeRecordAlignedReads(handshakeRecordAlignedReads_);

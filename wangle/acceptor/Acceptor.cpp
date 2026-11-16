@@ -126,6 +126,7 @@ void Acceptor::init(
             << ex.what();
       }
     }
+    defaultPeekingCallback_.setContext(sslCtxManager_->getDefaultSSLCtx());
   }
 
   initDownstreamConnectionManager(eventBase);
@@ -243,6 +244,8 @@ void Acceptor::resetSSLContextConfigs(
           cacheProvider_);
     }
     getFizzPeeker()->setSSLContextManager(sslCtxManager_);
+    defaultPeekingCallback_.setContext(
+        sslCtxManager_ ? sslCtxManager_->getDefaultSSLCtx() : nullptr);
   } catch (const std::runtime_error& ex) {
     WANGLE_LOG(ERROR) << "Failed to re-configure TLS: " << ex.what()
                       << "will keep old config";
@@ -391,10 +394,9 @@ void Acceptor::processEstablishedConnection(
     shouldDoSSL = sslCtxManager_->getDefaultSSLCtx() != nullptr;
   }
   if (shouldDoSSL) {
-    AsyncSSLSocket::UniquePtr sslSock(makeNewAsyncSSLSocket(
-        sslCtxManager_->getDefaultSSLCtx(), base_, fd, &clientAddr));
+    AsyncSocket::UniquePtr sock(makeNewAsyncSocket(base_, fd, &clientAddr));
     if (observer) {
-      sslSock->addLifecycleObserver(observer);
+      sock->addLifecycleObserver(observer);
     }
     ++numPendingSSLConns_;
     if (numPendingSSLConns_ > accConfig_->maxConcurrentSSLHandshakes) {
@@ -403,18 +405,17 @@ void Acceptor::processEstablishedConnection(
       auto error = SSLErrorEnum::DROPPED;
       auto latency = std::chrono::milliseconds(0);
       auto ex = folly::make_exception_wrapper<SSLException>(
-          error, latency, sslSock->getRawBytesReceived());
-      updateSSLStats(sslSock.get(), latency, error, ex);
+          error, latency, sock->getRawBytesReceived());
+      updateSSLStats(sock.get(), latency, error, ex);
       sslConnectionError(ex);
       return;
     }
 
-    tinfo.tfoSucceeded = sslSock->getTFOSucceeded();
+    tinfo.tfoSucceeded = sock->getTFOSucceeded();
     for (const auto& cb : observerList_.getAll()) {
-      cb->accept(sslSock.get());
+      cb->accept(sock.get());
     }
-    startHandshakeManager(
-        std::move(sslSock), this, clientAddr, acceptTime, tinfo);
+    startHandshakeManager(std::move(sock), this, clientAddr, acceptTime, tinfo);
   } else {
     tinfo.secure = false;
     tinfo.acceptTime = acceptTime;
@@ -431,14 +432,14 @@ void Acceptor::processEstablishedConnection(
 }
 
 void Acceptor::startHandshakeManager(
-    AsyncSSLSocket::UniquePtr sslSock,
+    AsyncSocket::UniquePtr sock,
     Acceptor*,
     const SocketAddress& clientAddr,
     std::chrono::steady_clock::time_point acceptTime,
     TransportInfo& tinfo) noexcept {
   auto manager = securityProtocolCtxManager_.getHandshakeManager(
       this, clientAddr, acceptTime, tinfo);
-  manager->start(std::move(sslSock));
+  manager->start(std::move(sock));
 }
 
 [[maybe_unused]] std::string logContext(folly::AsyncTransport& transport) {

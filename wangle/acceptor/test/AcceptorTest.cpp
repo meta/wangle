@@ -538,19 +538,17 @@ TEST_P(AcceptorTest, AcceptDrain) {
  * Test if AsyncSocket::LegacyLifecycleObserver can track socket during SSL
  * accept.
  *
- * With Fizz support, the accept process involves transforming the AsyncSocket
- * to an AsyncFizzServer. Then, if Fizz falls back to OpenSSL, the
- * AsyncFizzServer will be transformed into an AsyncSSLSocket.
+ * With Fizz support, the AsyncSocket becomes the transport for an
+ * AsyncFizzServer. If Fizz falls back to OpenSSL, the AsyncSocket is
+ * transformed into an AsyncSSLSocket.
  *
- * During each transformation, the LegacyLifecycleObserver::move callback must
+ * During the transformation, the LegacyLifecycleObserver::move callback must
  * be triggered so that the observer can unsubscribe from events on the old
- * socket and subscribe to events on the new socket. This requires Wangle and
- * Fizz to use the AsyncSocket(AsyncSocket* oldSocket) constructor when
- * performing the transformation.
+ * socket and subscribe to events on the new socket. This requires the fallback
+ * path to construct the AsyncSSLSocket from the existing AsyncSocket.
  *
- * This test ensures that even in the worst case, where two transformations
- * occur, that the observer will be able to track the socket through to the
- * completion of the accept, when ready() is triggered.
+ * This test ensures that the observer follows the fallback transformation
+ * through to the completion of the accept, when ready() is triggered.
  */
 TEST_P(
     AcceptorTest,
@@ -603,41 +601,6 @@ TEST_P(
 
   if (testConfig == TestSSLConfig::SSL ||
       testConfig == TestSSLConfig::SSL_MULTI_CA) {
-    // AsyncSocket -> AsyncFizzServer
-    EXPECT_CALL(*lifecycleCb, fdDetach(_))
-        .InSequence(s1)
-        .WillOnce(Invoke([&remoteSocket](folly::AsyncTransport* socket) {
-          EXPECT_EQ(remoteSocket, socket);
-        }));
-    EXPECT_CALL(*lifecycleCb, move(_, _))
-        .InSequence(s1)
-        .WillOnce(Invoke([&lifecycleCb, &remoteSocket, &s2](
-                             folly::AsyncSocket* oldSocket,
-                             folly::AsyncSocket* newSocket) {
-          EXPECT_EQ(remoteSocket, oldSocket);
-          EXPECT_NE(remoteSocket, newSocket);
-
-          // remove LifecycleCallback from old socket
-          EXPECT_CALL(*lifecycleCb, observerDetach(_))
-              .InSequence(s2)
-              .WillOnce(Invoke([&remoteSocket](folly::AsyncTransport* socket) {
-                EXPECT_EQ(remoteSocket, socket);
-              }));
-          EXPECT_TRUE(oldSocket->removeLifecycleObserver(lifecycleCb.get()));
-          EXPECT_THAT(oldSocket->getLifecycleObservers(), IsEmpty());
-
-          // add LifecycleCallback to new socket
-          EXPECT_THAT(newSocket->getLifecycleObservers(), IsEmpty());
-          EXPECT_CALL(*lifecycleCb, observerAttach(_));
-          newSocket->addLifecycleObserver(lifecycleCb.get());
-          EXPECT_THAT(
-              newSocket->getLifecycleObservers(),
-              UnorderedElementsAre(lifecycleCb.get()));
-
-          // update remoteSocket
-          remoteSocket = newSocket;
-        }));
-
     EXPECT_CALL(*fizzLoggingCb, logFallbackHandshakeSuccess(_, _));
 
     // AsyncFizzServer -> AsyncSSLSocket

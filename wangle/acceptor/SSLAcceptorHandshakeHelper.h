@@ -30,13 +30,17 @@ class SSLAcceptorHandshakeHelper : public AcceptorHandshakeHelper,
                                    public folly::AsyncSSLSocket::HandshakeCB {
  public:
   SSLAcceptorHandshakeHelper(
+      std::shared_ptr<const folly::SSLContext> context,
       const folly::SocketAddress& clientAddr,
       std::chrono::steady_clock::time_point acceptTime,
       TransportInfo& tinfo)
-      : clientAddr_(clientAddr), acceptTime_(acceptTime), tinfo_(tinfo) {}
+      : context_(std::move(context)),
+        clientAddr_(clientAddr),
+        acceptTime_(acceptTime),
+        tinfo_(tinfo) {}
 
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept override;
 
   void dropConnection(SSLErrorEnum reason = SSLErrorEnum::NO_ERROR) override {
@@ -57,6 +61,7 @@ class SSLAcceptorHandshakeHelper : public AcceptorHandshakeHelper,
       folly::AsyncSSLSocket* sock,
       const folly::AsyncSocketException& ex) noexcept override;
 
+  std::shared_ptr<const folly::SSLContext> context_;
   folly::AsyncSSLSocket::UniquePtr socket_;
   AcceptorHandshakeHelper::Callback* callback_;
   const folly::SocketAddress& clientAddr_;
@@ -73,14 +78,24 @@ class DefaultToSSLPeekingCallback
             0,
             SecureTransportType::TLS) {}
 
+  void setContext(std::shared_ptr<const folly::SSLContext> context) {
+    context_ = std::move(context);
+  }
+
   AcceptorHandshakeHelper::UniquePtr getHelper(
       const std::vector<uint8_t>& /* bytes */,
       const folly::SocketAddress& clientAddr,
       std::chrono::steady_clock::time_point acceptTime,
       TransportInfo& tinfo) override {
-    return AcceptorHandshakeHelper::UniquePtr(
-        new SSLAcceptorHandshakeHelper(clientAddr, acceptTime, tinfo));
+    if (!context_) {
+      return nullptr;
+    }
+    return AcceptorHandshakeHelper::UniquePtr(new SSLAcceptorHandshakeHelper(
+        context_, clientAddr, acceptTime, tinfo));
   }
+
+ private:
+  std::shared_ptr<const folly::SSLContext> context_;
 };
 
 } // namespace wangle

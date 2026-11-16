@@ -39,7 +39,7 @@ std::string describeAddresses(const folly::AsyncTransport* transport) {
 }
 
 void AcceptorHandshakeManager::start(
-    folly::AsyncSSLSocket::UniquePtr sock) noexcept {
+    folly::AsyncSocket::UniquePtr sock) noexcept {
   DestructorGuard dg(this);
   acceptor_->getConnectionManager()->addConnection(this, true);
   startHelper(std::move(sock));

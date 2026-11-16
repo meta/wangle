@@ -21,7 +21,7 @@
 
 #include <folly/futures/Barrier.h>
 #include <folly/io/async/ScopedEventBaseThread.h>
-#include <folly/io/async/test/MockAsyncSSLSocket.h>
+#include <folly/io/async/test/MockAsyncSocket.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 #include <folly/synchronization/Baton.h>
@@ -41,11 +41,10 @@ class EvbHandshakeHelperTest : public Test {
     original_.getEventBase()->runInEventBaseThreadAndWait([=, this] {
       originalThreadId_ = std::this_thread::get_id();
       auto evb = original_.getEventBase();
-      auto sslSock =
-          new MockAsyncSSLSocket(std::make_shared<SSLContext>(), evb, true);
+      auto sock = new MockAsyncSocket(evb);
 
-      sslSock_ = sslSock;
-      sockPtr_.reset(sslSock);
+      sock_ = sock;
+      sockPtr_.reset(sock);
     });
 
     alternate_.getEventBase()->runInEventBaseThreadAndWait(
@@ -75,8 +74,8 @@ class EvbHandshakeHelperTest : public Test {
 
   MockHandshakeHelperCallback<UseOwnedRawPtrPolicy> mockCb_;
 
-  MockAsyncSSLSocket* sslSock_{nullptr};
-  AsyncSSLSocket::UniquePtr sockPtr_{nullptr};
+  MockAsyncSocket* sock_{nullptr};
+  AsyncSocket::UniquePtr sockPtr_{nullptr};
 };
 
 TEST_F(EvbHandshakeHelperTest, TestSuccessPath) {
@@ -153,7 +152,7 @@ TEST_F(EvbHandshakeHelperTest, TestDropConnection) {
   EXPECT_CALL(*mockHelper_, dropConnection(_)).WillOnce(Invoke([&](auto) {
     EXPECT_EQ(alternateThreadId_, std::this_thread::get_id());
     WANGLE_CHECK(alternate_.getEventBase()->isInEventBaseThread());
-    evbHelper_->connectionError(sslSock_, {}, {});
+    evbHelper_->connectionError(sock_, {}, {});
     barrier.post();
   }));
 
@@ -165,8 +164,8 @@ TEST_F(EvbHandshakeHelperTest, TestDropConnection) {
       .WillOnce(Invoke([&](auto sock, auto&&) {
         EXPECT_EQ(alternate_.getEventBase(), sock->getEventBase());
         EXPECT_EQ(alternateThreadId_, std::this_thread::get_id());
-        sslSock_ = dynamic_cast<MockAsyncSSLSocket*>(sock);
-        sockPtr_.reset(sslSock_);
+        sock_ = dynamic_cast<MockAsyncSocket*>(sock);
+        sockPtr_.reset(sock_);
         barrier.post();
       }));
 
@@ -217,8 +216,8 @@ TEST_F(EvbHandshakeHelperTest, TestDropConnectionTricky) {
       .WillOnce(Invoke([&](auto sock, auto&&) {
         EXPECT_EQ(alternate_.getEventBase(), sock->getEventBase());
         EXPECT_EQ(alternateThreadId_, std::this_thread::get_id());
-        sslSock_ = dynamic_cast<MockAsyncSSLSocket*>(sock);
-        sockPtr_.reset(sslSock_);
+        sock_ = dynamic_cast<MockAsyncSocket*>(sock);
+        sockPtr_.reset(sock_);
         barrier.post();
       }));
 

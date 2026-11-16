@@ -28,9 +28,13 @@ static const std::string empty_string;
 using namespace folly;
 
 void SSLAcceptorHandshakeHelper::start(
-    folly::AsyncSSLSocket::UniquePtr sock,
+    folly::AsyncSocket::UniquePtr sock,
     AcceptorHandshakeHelper::Callback* callback) noexcept {
-  socket_ = std::move(sock);
+  socket_ = folly::AsyncSSLSocket::UniquePtr(new folly::AsyncSSLSocket(
+      context_,
+      std::move(sock),
+      true, /* server */
+      true /* deferSecurityNegotiation */));
   callback_ = callback;
 
   socket_->enableClientHelloParsing();

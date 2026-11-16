@@ -16,9 +16,10 @@
 
 #include <wangle/acceptor/PeekingAcceptorHandshakeHelper.h>
 
-#include <folly/io/async/test/MockAsyncSSLSocket.h>
+#include <folly/io/async/test/MockAsyncSocket.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
+#include <wangle/acceptor/SSLAcceptorHandshakeHelper.h>
 #include <wangle/acceptor/test/AcceptorHelperMocks.h>
 
 using namespace folly;
@@ -52,11 +53,8 @@ class MockPeekingCallback
 class PeekingAcceptorHandshakeHelperTest : public Test {
  protected:
   void SetUp() override {
-    sslSock_ = new MockAsyncSSLSocket(
-        SSLContextPtr(new SSLContext()),
-        &base_,
-        true /* defer security negotiation */);
-    sockPtr_ = AsyncSSLSocket::UniquePtr(sslSock_);
+    sock_ = new MockAsyncSocket(&base_);
+    sockPtr_ = AsyncSocket::UniquePtr(sock_);
 
     peekCallbacks_.push_back(&mockPeekCallback1_);
     peekCallbacks_.push_back(&mockPeekCallback2_);
@@ -74,8 +72,8 @@ class PeekingAcceptorHandshakeHelperTest : public Test {
   }
 
   PeekingAcceptorHandshakeHelper* helper_;
-  MockAsyncSSLSocket* sslSock_;
-  AsyncSSLSocket::UniquePtr sockPtr_;
+  MockAsyncSocket* sock_;
+  AsyncSocket::UniquePtr sockPtr_;
   EventBase base_;
   MockPeekingCallback mockPeekCallback1_{2, SecureTransportType::TLS};
   MockPeekingCallback mockPeekCallback2_{1};
@@ -115,6 +113,13 @@ TEST_F(PeekingAcceptorHandshakeHelperTest, TestPeekNonSuccess) {
   helper_->peekSuccess(buf);
 }
 
+TEST_F(PeekingAcceptorHandshakeHelperTest, TestDefaultSSLWithoutContext) {
+  DefaultToSSLPeekingCallback callback;
+  EXPECT_EQ(
+      nullptr,
+      callback.getHelper({}, sa_, std::chrono::steady_clock::now(), tinfo_));
+}
+
 TEST_F(PeekingAcceptorHandshakeHelperTest, TestPeek2ndSuccess) {
   helper_->start(std::move(sockPtr_), &callback_);
   // first 2 bytes of SSL3+.
@@ -132,8 +137,8 @@ TEST_F(PeekingAcceptorHandshakeHelperTest, TestPeek2ndSuccess) {
 
 TEST_F(PeekingAcceptorHandshakeHelperTest, TestEOFDuringPeek) {
   AsyncTransport::ReadCallback* rcb = nullptr;
-  EXPECT_CALL(*sslSock_, setReadCB(_)).WillOnce(SaveArg<0>(&rcb));
-  EXPECT_CALL(*sslSock_, setReadCB(nullptr));
+  EXPECT_CALL(*sock_, setReadCB(_)).WillOnce(SaveArg<0>(&rcb));
+  EXPECT_CALL(*sock_, setReadCB(nullptr));
   EXPECT_CALL(callback_, protocolPeekError_(_));
   EXPECT_CALL(callback_, connectionError_(_, _, _));
   helper_->start(std::move(sockPtr_), &callback_);
@@ -143,8 +148,8 @@ TEST_F(PeekingAcceptorHandshakeHelperTest, TestEOFDuringPeek) {
 
 TEST_F(PeekingAcceptorHandshakeHelperTest, TestPartialEOFDuringPeek) {
   AsyncTransport::ReadCallback* rcb = nullptr;
-  EXPECT_CALL(*sslSock_, setReadCB(_)).WillOnce(SaveArg<0>(&rcb));
-  EXPECT_CALL(*sslSock_, setReadCB(nullptr));
+  EXPECT_CALL(*sock_, setReadCB(_)).WillOnce(SaveArg<0>(&rcb));
+  EXPECT_CALL(*sock_, setReadCB(nullptr));
   EXPECT_CALL(callback_, protocolPeekError_(_));
   EXPECT_CALL(callback_, connectionError_(_, _, _));
   helper_->start(std::move(sockPtr_), &callback_);
@@ -171,7 +176,7 @@ TEST_F(PeekingAcceptorHandshakeHelperTest, TestPeekErr) {
 TEST_F(PeekingAcceptorHandshakeHelperTest, TestDropDuringPeek) {
   helper_->start(std::move(sockPtr_), &callback_);
 
-  EXPECT_CALL(*sslSock_, closeNow()).Times(AtLeast(1)).WillOnce(Invoke([&] {
+  EXPECT_CALL(*sock_, closeNow()).Times(AtLeast(1)).WillOnce(Invoke([&] {
     helper_->peekError(AsyncSocketException(
         AsyncSocketException::AsyncSocketExceptionType::UNKNOWN, "unit test"));
   }));

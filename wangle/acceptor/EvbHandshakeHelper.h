@@ -43,7 +43,7 @@ class EvbHandshakeHelper : public AcceptorHandshakeHelper,
         handshakeEvb_(handshakeEvb) {}
 
   void start(
-      folly::AsyncSSLSocket::UniquePtr sock,
+      folly::AsyncSocket::UniquePtr sock,
       AcceptorHandshakeHelper::Callback* callback) noexcept override;
 
   void dropConnection(SSLErrorEnum reason = SSLErrorEnum::NO_ERROR) override;

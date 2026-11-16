@@ -20,7 +20,7 @@
 namespace wangle {
 
 void EvbHandshakeHelper::start(
-    folly::AsyncSSLSocket::UniquePtr sock,
+    folly::AsyncSocket::UniquePtr sock,
     AcceptorHandshakeHelper::Callback* callback) noexcept {
   auto transition =
       tryTransition(HandshakeState::Invalid, HandshakeState::Started);

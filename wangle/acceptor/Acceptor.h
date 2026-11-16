@@ -274,7 +274,7 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
    * Creates and starts the handshake manager.
    */
   virtual void startHandshakeManager(
-      folly::AsyncSSLSocket::UniquePtr sslSock,
+      folly::AsyncSocket::UniquePtr sock,
       Acceptor* acceptor,
       const folly::SocketAddress& clientAddr,
       std::chrono::steady_clock::time_point acceptTime,
