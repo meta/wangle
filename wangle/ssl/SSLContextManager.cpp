@@ -17,6 +17,7 @@
 #include <fizz/backend/openssl/certificate/X509ChainWithPkey.h>
 #include <fizz/record/Extensions.h>
 #include <fizz/record/Types.h>
+#include <fmt/format.h>
 #include <folly/io/async/PasswordInFile.h>
 #include <wangle/ssl/ClientHelloExtStats.h>
 #include <wangle/ssl/FizzFallbackState.h>
@@ -1024,7 +1025,7 @@ SSLContextManager::SslContexts::serverNameCallback(
     return SSLContext::SERVER_NAME_FOUND;
   }
 
-  WANGLE_VLOG(6) << folly::stringPrintf("Cannot find a SSL_CTX for \"%s\"", sn);
+  WANGLE_VLOG(6) << fmt::format("Cannot find a SSL_CTX for \"{}\"", sn);
 
   if (stats && reqHasServerName) {
     stats->recordNotMatch();
@@ -1186,8 +1187,8 @@ void SSLContextManager::SslContexts::insertSSLCtxByDomainNameImpl(
   const char* dn_ptr = dn.c_str();
   size_t len = dn.length();
 
-  WANGLE_VLOG(4) << folly::stringPrintf(
-      "Adding CN/Subject-alternative-name \"%s\" for "
+  WANGLE_VLOG(4) << fmt::format(
+      "Adding CN/Subject-alternative-name \"{}\" for "
       "SNI search",
       dn_ptr);
 
@@ -1308,8 +1309,8 @@ bool SSLContextManager::SslContexts::isDefaultCtxExact(
     const SSLContextKey& key) const {
   if (std::find(defaultCtxKeys_.begin(), defaultCtxKeys_.end(), key) !=
       defaultCtxKeys_.end()) {
-    WANGLE_VLOG(6) << folly::stringPrintf(
-        "\"%s\" is a direct match to default", key.dnString.c_str());
+    WANGLE_VLOG(6) << fmt::format(
+        "\"{}\" is a direct match to default", key.dnString.c_str());
     return true;
   }
   return false;
@@ -1343,16 +1344,16 @@ shared_ptr<SSLContext> SSLContextManager::SslContexts::getSSLCtxBySuffix(
     SSLContextKey suffixKey(DNString(key.dnString, dot));
     const auto v = dnMap_.find(suffixKey);
     if (v != dnMap_.end()) {
-      WANGLE_VLOG(6) << folly::stringPrintf(
-          "\"%s\" is a willcard match to \"%s\"",
+      WANGLE_VLOG(6) << fmt::format(
+          "\"{}\" is a willcard match to \"{}\"",
           key.dnString.c_str(),
           suffixKey.dnString.c_str());
       return v->second;
     }
   }
 
-  WANGLE_VLOG(6) << folly::stringPrintf(
-      "\"%s\" is not a wildcard match", key.dnString.c_str());
+  WANGLE_VLOG(6) << fmt::format(
+      "\"{}\" is not a wildcard match", key.dnString.c_str());
   return shared_ptr<SSLContext>();
 }
 
@@ -1360,12 +1361,12 @@ shared_ptr<SSLContext> SSLContextManager::SslContexts::getSSLCtxByExactDomain(
     const SSLContextKey& key) const {
   const auto v = dnMap_.find(key);
   if (v == dnMap_.end()) {
-    WANGLE_VLOG(6) << folly::stringPrintf(
-        "\"%s\" is not an exact match", key.dnString.c_str());
+    WANGLE_VLOG(6) << fmt::format(
+        "\"{}\" is not an exact match", key.dnString.c_str());
     return shared_ptr<SSLContext>();
   } else {
-    WANGLE_VLOG(6) << folly::stringPrintf(
-        "\"%s\" is an exact match", key.dnString.c_str());
+    WANGLE_VLOG(6) << fmt::format(
+        "\"{}\" is an exact match", key.dnString.c_str());
     return v->second;
   }
 }
