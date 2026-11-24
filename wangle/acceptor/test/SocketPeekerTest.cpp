@@ -21,7 +21,7 @@
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 
-#include <folly/io/async/test/MockAsyncSocket.h>
+#include <folly/io/async/testing/MockAsyncSocket.h>
 
 using namespace folly;
 using namespace folly::test;

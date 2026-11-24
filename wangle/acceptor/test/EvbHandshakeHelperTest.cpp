@@ -21,7 +21,7 @@
 
 #include <folly/futures/Barrier.h>
 #include <folly/io/async/ScopedEventBaseThread.h>
-#include <folly/io/async/test/MockAsyncSocket.h>
+#include <folly/io/async/testing/MockAsyncSocket.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 #include <folly/synchronization/Baton.h>

@@ -16,7 +16,7 @@
 
 #include <wangle/acceptor/PeekingAcceptorHandshakeHelper.h>
 
-#include <folly/io/async/test/MockAsyncSocket.h>
+#include <folly/io/async/testing/MockAsyncSocket.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 #include <wangle/acceptor/SSLAcceptorHandshakeHelper.h>
