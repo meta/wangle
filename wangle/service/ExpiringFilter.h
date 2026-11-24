@@ -38,7 +38,8 @@ class ExpiringFilter : public ServiceFilter<Req, Resp> {
         maxTime_(maxTime),
         timekeeper_(timekeeper) {
     if (maxTime_ > std::chrono::milliseconds(0)) {
-      maxTimeout_ = folly::futures::sleepUnsafe(maxTime_, timekeeper_);
+      maxTimeout_ =
+          folly::futures::sleep(maxTime_, timekeeper_).toUnsafeFuture();
       std::move(maxTimeout_).thenValue([this](auto&&) { this->close(); });
     }
     startIdleTimer();
@@ -58,7 +59,8 @@ class ExpiringFilter : public ServiceFilter<Req, Resp> {
       return;
     }
     if (idleTimeoutTime_ > std::chrono::milliseconds(0)) {
-      idleTimeout_ = folly::futures::sleepUnsafe(idleTimeoutTime_, timekeeper_);
+      idleTimeout_ =
+          folly::futures::sleep(idleTimeoutTime_, timekeeper_).toUnsafeFuture();
       std::move(idleTimeout_).thenValue([this](auto&&) { this->close(); });
     }
   }
