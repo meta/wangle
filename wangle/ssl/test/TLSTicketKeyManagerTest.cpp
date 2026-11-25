@@ -17,7 +17,7 @@
 #include <folly/io/async/AsyncSSLSocket.h>
 #include <folly/io/async/EventBase.h>
 #include <folly/io/async/SSLContext.h>
-#include <folly/io/async/test/AsyncSSLSocketTest.h>
+#include <folly/io/async/testing/AsyncSSLSocketTest.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 #include <folly/portability/OpenSSL.h>
@@ -26,7 +26,7 @@
 #include <wangle/ssl/test/MockSSLStats.h>
 
 #if defined(WANGLE_USE_FOLLY_TESTUTIL)
-#include <folly/io/async/test/TestSSLServer.h>
+#include <folly/io/async/testing/TestSSLServer.h>
 #include <folly/testing/TestUtil.h>
 
 namespace {

@@ -22,7 +22,7 @@
 #include <folly/FileUtil.h>
 #include <folly/io/async/EventBase.h>
 #include <folly/io/async/IoUringBackend.h>
-#include <folly/io/async/test/AsyncSSLSocketTest.h>
+#include <folly/io/async/testing/AsyncSSLSocketTest.h>
 #include <folly/portability/GMock.h>
 #include <folly/portability/GTest.h>
 #include <folly/testing/TestUtil.h>

@@ -24,7 +24,7 @@
 #include <wangle/ssl/TLSTicketKeyManager.h>
 
 #if defined(WANGLE_USE_FOLLY_TESTUTIL)
-#include <folly/io/async/test/TestSSLServer.h>
+#include <folly/io/async/testing/TestSSLServer.h>
 #include <folly/testing/TestUtil.h>
 
 namespace {
